@@ -23,7 +23,17 @@ migrate = Migrate(app, db)
 def home():
     return render_template("index.html")
 
-# a route to pull a random cafe from sample data
+# HTTP GET - all records
+@app.route("/all")
+def all_cafes():
+    # look into database & get all the cafes
+    cafes = db.session.execute(db.select(Cafe).order_by(Cafe.id)).scalars().all()
+    # list comprehension to make dicts of each cafe in list
+    all_cafes_dict = [cafe.as_dict() for cafe in cafes] 
+    # pass the list into a json of cafes 
+    return jsonify(cafes=all_cafes_dict)
+
+# HTTP GET - random record
 @app.route("/random")
 def random_cafe():
     # look into the database
