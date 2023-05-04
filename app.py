@@ -23,6 +23,8 @@ migrate = Migrate(app, db)
 def home():
     return render_template("index.html")
 
+## HTTP GET - Read Record
+
 # HTTP GET - all records
 @app.route("/all")
 def all_cafes():
@@ -45,7 +47,20 @@ def random_cafe():
     # return json info
     return jsonify(cafe_dict)
 
-## HTTP GET - Read Record
+# HTTP GET - search for a record by location
+@app.route("/search")
+def search_cafe():
+    # get the the query params of the location
+    cafe_location = request.args.get("location")
+    # search the database
+    found_cafes = db.session.execute(db.select(Cafe).filter_by(location=cafe_location)).scalars().all()
+    # create a dict of the found cafe
+    found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
+    # check if the found_cafes_dict is empty then return specific message if it is
+    if len(found_cafes_dict) == 0:
+        return jsonify(error={"Not Found": "Sorry, we don't have any cafes at that location."})
+    # return the json
+    return jsonify(cafes=found_cafes_dict)
 
 ## HTTP POST - Create Record
 
