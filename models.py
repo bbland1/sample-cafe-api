@@ -16,6 +16,8 @@ class Cafe(db.Model):
     can_take_calls = db.Column(db.Boolean, nullable=False)
     coffee_price = db.Column(db.String(250), nullable=True)
 
+    def __repr__(self):
+        return f'<Cafe: ID: {self.id} NAME: {self.name} LOCATION: {self.location}>'
     def as_dict(self):
         return {
             'id': self.id,
