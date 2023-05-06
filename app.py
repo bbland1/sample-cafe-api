@@ -1,7 +1,7 @@
 import random
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, abort
 from flask_migrate import Migrate
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func, or_
 
 from models import Cafe, db
 
@@ -23,7 +23,7 @@ def home():
 ## HTTP GET - Read Record
 
 # all records
-@app.route("/all")
+@app.route("/api/v1/cafes")
 def all_cafes():
     # look into database & get all the cafes
     cafes = db.session.execute(db.select(Cafe).order_by(Cafe.id)).scalars().all()
@@ -33,7 +33,7 @@ def all_cafes():
     return jsonify(cafes=all_cafes_dict)
 
 # random record
-@app.route("/random")
+@app.route("/api/v1/cafes/random")
 def random_cafe():
     # look into the database
     # order the database randomly
@@ -45,34 +45,35 @@ def random_cafe():
     return jsonify(cafe_dict)
 
 # search for a record by location
-@app.route("/search/location/<path:cafe>")
-def search_location(cafe):
-    # get location from the route and get it in title case for the search
-    cafe_normalized = cafe.title()
+@app.route("/api/v1/cafes/search")
+def search_location():
+    # get query parameters
+    cafe_location = request.args.get("loc")
+    cafe_name = request.args.get("name")
     # search the database
-    found_cafes = db.session.execute(db.select(Cafe).filter_by(location=cafe_normalized)).scalars().all()
-    # create a dict of the found cafe
-    found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
-    # check if the found_cafes_dict is empty then return specific message if it is
-    if len(found_cafes_dict) == 0:
-        # sends an error response with a specific error code
-        return jsonify(error={"Not Found": "Sorry, we don't have any cafes at that location."}), 400
-    # return the json
-    return jsonify(cafes=found_cafes_dict)
 
-# search for a record by if it contains specified name
-@app.route("/search/name/<path:cafe>")
-def search_name(cafe):
-    # get name from the route and get it in title case for the search
-    cafe_normalized = cafe.title()
-    # search the database for if the param is in the name column at all of cafe and return any that contain it
-    found_cafes = db.session.execute(db.select(Cafe).filter(Cafe.name.contains(cafe_normalized))).scalars().all()
+    # check that one of the query parameters are actually passed if not get out
+    if not cafe_name and not cafe_location:
+        return jsonify(error={"Query Issue": "A query parameter wasn't passed."}), 400
+
+    # set a search parameters to empty list
+    search_params = []
+
+    # if the cafe name is passed add it
+    if cafe_name and not cafe_location:
+        search_params.append(Cafe.name.contains(cafe_name))
+    
+    # if the cafe location is pass add it
+    if cafe_location and not cafe_name:
+        search_params.append(Cafe.location.contains(cafe_location))
+
+    found_cafes = db.session.execute(db.select(Cafe).filter(or_(*search_params))).scalars().all()
     # create a dict of the found cafe
     found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
     # check if the found_cafes_dict is empty then return specific message if it is
     if len(found_cafes_dict) == 0:
         # sends an error response with a specific error code
-        return jsonify(error={"Not Found": "Sorry, we don't have any cafes at that name."}), 400
+        return jsonify(error={"Not Found": "Sorry, didn't find any cafes with that search."}), 400
     # return the json
     return jsonify(cafes=found_cafes_dict)
 
@@ -117,6 +118,7 @@ def add_cafe():
 
 ## HTTP PUT/PATCH - Update Record
 # update the price of black coffee
+# @app.route("/")
 
 ## HTTP DELETE - Delete Record
 
