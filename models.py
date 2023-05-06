@@ -14,7 +14,7 @@ class Cafe(db.Model):
     has_wifi = db.Column(db.Boolean, nullable=False)
     has_sockets = db.Column(db.Boolean, nullable=False)
     can_take_calls = db.Column(db.Boolean, nullable=False)
-    coffee_price = db.Column(db.String(250), nullable=True)
+    black_coffee_price = db.Column(db.String(250), nullable=True)
 
     def __repr__(self):
         return f'<Cafe: ID: {self.id} NAME: {self.name} LOCATION: {self.location}>'
@@ -30,5 +30,5 @@ class Cafe(db.Model):
             'has_wifi': self.has_wifi,
             'has_sockets': self.has_sockets,
             'can_take_calls': self.can_take_calls,
-            'coffee_price': self.coffee_price,
+            'black_coffee_price': self.black_coffee_price,
         }

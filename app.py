@@ -15,9 +15,6 @@ db.init_app(app)
 
 migrate = Migrate(app, db)
 
-# with app.app_context():
-#     db.create_all()
-
 
 @app.route("/")
 def home():
@@ -48,18 +45,34 @@ def random_cafe():
     return jsonify(cafe_dict)
 
 # search for a record by location
-@app.route("/search")
-def search_cafe():
-    # get the the query params of the location
-    cafe_location = request.args.get("location")
+@app.route("/search/location/<path:cafe>")
+def search_location(cafe):
+    # get location from the route and get it in title case for the search
+    cafe_normalized = cafe.title()
     # search the database
-    found_cafes = db.session.execute(db.select(Cafe).filter_by(location=cafe_location)).scalars().all()
+    found_cafes = db.session.execute(db.select(Cafe).filter_by(location=cafe_normalized)).scalars().all()
     # create a dict of the found cafe
     found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
     # check if the found_cafes_dict is empty then return specific message if it is
     if len(found_cafes_dict) == 0:
         # sends an error response with a specific error code
         return jsonify(error={"Not Found": "Sorry, we don't have any cafes at that location."}), 400
+    # return the json
+    return jsonify(cafes=found_cafes_dict)
+
+# search for a record by if it contains specified name
+@app.route("/search/name/<path:cafe>")
+def search_name(cafe):
+    # get name from the route and get it in title case for the search
+    cafe_normalized = cafe.title()
+    # search the database for if the param is in the name column at all of cafe and return any that contain it
+    found_cafes = db.session.execute(db.select(Cafe).filter(Cafe.name.contains(cafe_normalized))).scalars().all()
+    # create a dict of the found cafe
+    found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
+    # check if the found_cafes_dict is empty then return specific message if it is
+    if len(found_cafes_dict) == 0:
+        # sends an error response with a specific error code
+        return jsonify(error={"Not Found": "Sorry, we don't have any cafes at that name."}), 400
     # return the json
     return jsonify(cafes=found_cafes_dict)
 
@@ -94,7 +107,7 @@ def add_cafe():
         has_wifi= bool(cafe_to_add["has_wifi"]),
         has_sockets= bool(cafe_to_add["has_sockets"]),
         can_take_calls= bool(cafe_to_add["can_take_calls"]),
-        coffee_price= cafe_to_add["coffee_price"],
+        black_coffee_price= cafe_to_add["black_coffee_price"],
     )
     # add to database with add & commit
     db.session.add(new_cafe)
@@ -103,6 +116,7 @@ def add_cafe():
     return jsonify(response={"success": "New cafe was added to the database."})
 
 ## HTTP PUT/PATCH - Update Record
+# update the price of black coffee
 
 ## HTTP DELETE - Delete Record
 
