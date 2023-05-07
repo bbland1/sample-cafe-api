@@ -56,18 +56,21 @@ def search_location():
     if not cafe_name and not cafe_location:
         return jsonify(error={"Query Issue": "A query parameter wasn't passed."}), 400
 
-    # set a search parameters to empty list
-    search_params = []
+    # set a found_cafe to empty list so the results from the proper search depending on the query is passed
+    found_cafes = []
 
-    # if the cafe name is passed add it
+    # when the cafe location and name is passed the search will filter based on both 
+    if cafe_name and cafe_location:
+        found_cafes = db.session.execute(db.select(Cafe).filter(Cafe.location.contains(cafe_location)).filter(Cafe.name.contains(cafe_name))).scalars().all()
+
+    # if just name is passed
     if cafe_name and not cafe_location:
-        search_params.append(Cafe.name.contains(cafe_name))
+        found_cafes = db.session.execute(db.select(Cafe).filter(Cafe.name.contains(cafe_name))).scalars().all()
     
-    # if the cafe location is pass add it
+    # if just location is passed
     if cafe_location and not cafe_name:
-        search_params.append(Cafe.location.contains(cafe_location))
+        found_cafes = db.session.execute(db.select(Cafe).filter(Cafe.location.contains(cafe_location))).scalars().all()
 
-    found_cafes = db.session.execute(db.select(Cafe).filter(or_(*search_params))).scalars().all()
     # create a dict of the found cafe
     found_cafes_dict = [cafe.as_dict() for cafe in found_cafes]
     # check if the found_cafes_dict is empty then return specific message if it is
