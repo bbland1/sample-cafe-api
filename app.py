@@ -144,6 +144,7 @@ def update_cafe(cafe_id):
     if "name" in update_info:
         cafe_info.name = update_info["name"]
 
+    # ? it maybe good for the url to look into checking that the updated url is a url and maybe in the adding too???
     if "map_url" in update_info:
         cafe_info.map_url = update_info["map_url"]
 
@@ -173,11 +174,26 @@ def update_cafe(cafe_id):
 
     # commit the changes
     db.session.commit()
+    
 
     # return a success
     return jsonify(response={"Success": f"{cafe_info.name} was updated."})
 
 ## HTTP DELETE - Delete Record
+@app.route("/api/v1/cafes/<int:cafe_id>", methods=["DELETE"])
+def delete_cafe(cafe_id):
+    # find the record by the id
+    cafe_to_delete = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()
+
+    # check that a cafe was found and if not return error
+    if not cafe_to_delete:
+        return jsonify(error={"Not Found": "No product was found with that id."}), 404
+
+    # delete and save the delete
+    db.session.delete(cafe_to_delete)
+    db.session.commit()
+    # return a success
+    return jsonify(response={"Success": f"{cafe_to_delete.name} was deleted."})
 
 
 if __name__ == '__main__':
