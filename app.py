@@ -42,7 +42,7 @@ def random_cafe():
     # use the made dictionary method in the model to change info to dict
     cafe_dict = random_cafe.as_dict()
     # return json info
-    return jsonify(cafe_dict)
+    return jsonify(cafes=cafe_dict)
 
 # search for a record by location
 @app.route("/api/v1/cafes/search")
@@ -83,21 +83,20 @@ def search_location():
 ## HTTP POST - Create Record
 
 # add a cafe to the database with api call
-@app.route("/add", methods=["POST"])
+@app.route("/api/v1/cafes", methods=["POST"])
 def add_cafe():
     # get the request body info and create the new cafe using the model
-    # check if the data is json or from encoded
+    # check if the data is json or form encoded
     if request.is_json:
         cafe_to_add = request.get_json()
     else:
         cafe_to_add = request.form
 
-    # print(cafe_to_add)
     # validate the data sent to make sure the database required data is there
     required_fields = ["name", "map_url", "img_url", "location", "seats", "has_toilet", "has_wifi", "has_sockets", "can_take_calls"]
     if not all(field in cafe_to_add for field in required_fields):
         # sends an error response with a specific error code
-        return jsonify(error={"Not Found": "Sorry you had an empty field."}), 400
+        return jsonify(error={"Not Found": "Sorry you had an empty field."}), 404
     
     # set all the required fields of the form
     new_cafe = Cafe(
@@ -117,11 +116,66 @@ def add_cafe():
     db.session.add(new_cafe)
     db.session.commit()
     # return success response
-    return jsonify(response={"success": "New cafe was added to the database."})
+    return jsonify(response={"Success": "New cafe was added to the database."})
 
 ## HTTP PUT/PATCH - Update Record
-# update the price of black coffee
-# @app.route("/")
+
+# update a record  based on id search
+@app.route("/api/v1/cafes/<int:cafe_id>", methods=["PATCH"])
+def update_cafe(cafe_id):
+    #search the database using the passed in 
+    cafe_info = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()
+
+    # check that a cafe was found and if not return error
+    if not cafe_info:
+        return jsonify(error={"Not Found": "No product was found with that id."}), 404
+    
+    # check if the data is json or form encoded
+    if request.is_json:
+        update_info = request.get_json()
+    else:
+        update_info = request.form
+
+    # check to make sure some type of update parameter was passed
+    if not update_info:
+        return jsonify(error={"Not Found": "Nothing was passed to update."}), 404
+    
+    # check which of the parameters were passed and update the ones that are truthy
+    if "name" in update_info:
+        cafe_info.name = update_info["name"]
+
+    if "map_url" in update_info:
+        cafe_info.map_url = update_info["map_url"]
+
+    if "img_url" in update_info:
+        cafe_info.img_url = update_info["img_url"]
+
+    if "location" in update_info:
+        cafe_info.location = update_info["location"]
+
+    if "seats" in update_info:
+        cafe_info.seats = update_info["seats"]
+
+    if "has_toilet" in update_info:
+        cafe_info.has_toilet = bool(update_info["has_toilet"])
+
+    if "has_wifi" in update_info:
+        cafe_info.has_wifi = bool(update_info["has_wifi"])
+
+    if "has_sockets" in update_info:
+        cafe_info.has_sockets = bool(update_info["has_sockets"])
+
+    if "can_take_calls" in update_info:
+        cafe_info.can_take_calls = bool(update_info["can_take_calls"])
+        
+    if "black_coffee_price" in update_info:
+        cafe_info.black_coffee_price = update_info["black_coffee_price"]
+
+    # commit the changes
+    db.session.commit()
+
+    # return a success
+    return jsonify(response={"Success": f"{cafe_info.name} was updated."})
 
 ## HTTP DELETE - Delete Record
 
