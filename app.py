@@ -54,7 +54,7 @@ def search_location():
 
     # check that one of the query parameters are actually passed if not get out
     if not cafe_name and not cafe_location:
-        return jsonify(error={"Query Issue": "A query parameter wasn't passed."}), 400
+        return jsonify({"Error": "A query parameter wasn't passed."}), 400
 
     # set a found_cafe to empty list so the results from the proper search depending on the query is passed
     found_cafes = []
@@ -76,7 +76,7 @@ def search_location():
     # check if the found_cafes_dict is empty then return specific message if it is
     if len(found_cafes_dict) == 0:
         # sends an error response with a specific error code
-        return jsonify(error={"Not Found": "Sorry, didn't find any cafes with that search."}), 400
+        return jsonify({"Error": "Sorry, didn't find any cafes with that search."}), 400
     # return the json
     return jsonify(cafes=found_cafes_dict)
 
@@ -96,7 +96,7 @@ def add_cafe():
     required_fields = ["name", "map_url", "img_url", "location", "seats", "has_toilet", "has_wifi", "has_sockets", "can_take_calls"]
     if not all(field in cafe_to_add for field in required_fields):
         # sends an error response with a specific error code
-        return jsonify(error={"Not Found": "Sorry you had an empty field."}), 404
+        return jsonify({"Error": "Sorry you had an empty field."}), 404
     
     # set all the required fields of the form
     new_cafe = Cafe(
@@ -116,7 +116,7 @@ def add_cafe():
     db.session.add(new_cafe)
     db.session.commit()
     # return success response
-    return jsonify(response={"Success": "New cafe was added to the database."})
+    return jsonify({"Success": "New cafe was added to the database."})
 
 ## HTTP PUT/PATCH - Update Record
 
@@ -128,7 +128,7 @@ def update_cafe(cafe_id):
 
     # check that a cafe was found and if not return error
     if not cafe_info:
-        return jsonify(error={"Not Found": "No product was found with that id."}), 404
+        return jsonify({"Error": "No product was found with that id."}), 404
     
     # check if the data is json or form encoded
     if request.is_json:
@@ -138,7 +138,7 @@ def update_cafe(cafe_id):
 
     # check to make sure some type of update parameter was passed
     if not update_info:
-        return jsonify(error={"Not Found": "Nothing was passed to update."}), 404
+        return jsonify({"Error": "Nothing was passed to update."}), 404
     
     # check which of the parameters were passed and update the ones that are truthy
     if "name" in update_info:
@@ -174,10 +174,10 @@ def update_cafe(cafe_id):
 
     # commit the changes
     db.session.commit()
-    
+
 
     # return a success
-    return jsonify(response={"Success": f"{cafe_info.name} was updated."})
+    return jsonify({"Success": f"{cafe_info.name} was updated."})
 
 ## HTTP DELETE - Delete Record
 @app.route("/api/v1/cafes/<int:cafe_id>", methods=["DELETE"])
@@ -187,13 +187,13 @@ def delete_cafe(cafe_id):
 
     # check that a cafe was found and if not return error
     if not cafe_to_delete:
-        return jsonify(error={"Not Found": "No product was found with that id."}), 404
+        return jsonify({"Error": "No product was found with that id."}), 404
 
     # delete and save the delete
     db.session.delete(cafe_to_delete)
     db.session.commit()
     # return a success
-    return jsonify(response={"Success": f"{cafe_to_delete.name} was deleted."})
+    return jsonify({"Success": f"{cafe_to_delete.name} was deleted."})
 
 
 if __name__ == '__main__':
