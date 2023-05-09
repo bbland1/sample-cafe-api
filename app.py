@@ -1,9 +1,9 @@
-import random
-from flask import Flask, jsonify, render_template, request, abort
+from flask import Flask, jsonify, render_template, request
 from flask_migrate import Migrate
-from sqlalchemy.sql.expression import func, or_
+from sqlalchemy.sql.expression import func
 
 from models import Cafe, db
+from api_key import check_api_key
 
 app = Flask(__name__)
 
@@ -84,6 +84,7 @@ def search_location():
 
 # add a cafe to the database with api call
 @app.route("/api/v1/cafes", methods=["POST"])
+@check_api_key
 def add_cafe():
     # get the request body info and create the new cafe using the model
     # check if the data is json or form encoded
@@ -122,6 +123,7 @@ def add_cafe():
 
 # update a record  based on id search
 @app.route("/api/v1/cafes/<int:cafe_id>", methods=["PATCH"])
+@check_api_key
 def update_cafe(cafe_id):
     #search the database using the passed in 
     cafe_info = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()
@@ -181,6 +183,7 @@ def update_cafe(cafe_id):
 
 ## HTTP DELETE - Delete Record
 @app.route("/api/v1/cafes/<int:cafe_id>", methods=["DELETE"])
+@check_api_key
 def delete_cafe(cafe_id):
     # find the record by the id
     cafe_to_delete = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()

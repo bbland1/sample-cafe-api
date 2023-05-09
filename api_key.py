@@ -1,4 +1,5 @@
 from flask import jsonify, request
+from models import APIUsers, db
 
 # set the api methods that need to check for api
 API_METHODS = ["POST", "PATCH", "DELETE"]
@@ -9,7 +10,7 @@ API_ROUTES = {
 }
 
 # have function to check api
-def check_api():
+def check_api_key():
     request_path = request.path
     request_method = request.method
 
@@ -18,15 +19,15 @@ def check_api():
         return 
     
     # get the api key, using custom header here for now, it seems bit simpler and this is a simpler api but still allows for more security
-    api_key = request.headers.get("X-API-Key")
+    request_api_key = request.headers.get("X-API-Key")
 
     # check if the api key is there
-    if not api_key:
+    if not request_api_key:
         return jsonify({"Error": "API key is missing."}), 401
     
     # check if the api key is correct
-    valid_api_keys = ["check 1", "check 2", "check 3"]
-    if api_key not in valid_api_keys:
+    user = db.session.execute(db.select(APIUsers).filter_by(api_key=request_api_key)).scalar_one()
+    if not user:
         return jsonify({"Error": "Invalid API Key"}), 401
     
     # check if the route needs api

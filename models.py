@@ -1,9 +1,11 @@
+import secrets
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
 ##Cafe TABLE Configuration
 class Cafe(db.Model):
+    __tablename__ = "London Cafes"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(250), unique=True, nullable=False)
     map_url = db.Column(db.String(500), nullable=False)
@@ -18,6 +20,8 @@ class Cafe(db.Model):
 
     def __repr__(self):
         return f'<Cafe: ID: {self.id} NAME: {self.name} LOCATION: {self.location}>'
+    
+    # make calls to dictionary
     def as_dict(self):
         return {
             'id': self.id,
@@ -33,7 +37,19 @@ class Cafe(db.Model):
             'black_coffee_price': self.black_coffee_price,
         }
     
-# class User(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     user = db.Column(db.String(250), unique=True, nullable=False)
-#     api_key = db.Column(db.String(500), nullable=False)
+# model for an api key database that will generate a secret api key as a user is made
+class APIUsers(db.Model):
+    __tablename__ = "api_keys"
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), nullable=False)
+    api_key = db.Column(db.String(64), unique=True, nullable=False)
+
+    def __repr__(self):
+        return f'<APIUser: ID: {self.id} USER: {self.username}>'
+
+    # generating a secret api key for a user
+    def generate_api_key(self, user):
+        self.username = user
+        self.api_key = secrets.token_hex(16)
+        db.session.commit()
+        return self.api_key
