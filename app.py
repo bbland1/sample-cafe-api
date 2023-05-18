@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request
 from flask_migrate import Migrate
 from sqlalchemy.sql.expression import func
 
-from models import Cafe, db
+from models import Cafe, APIUsers, db
 from api_key import check_api_key
 
 app = Flask(__name__)
@@ -14,6 +14,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 migrate = Migrate(app, db)
+
+with app.app_context():
+    db.create_all()
+
+# @app.before_request
+# def before_request():
+#     check_api_key()
 
 
 @app.route("/")
@@ -82,6 +89,20 @@ def search_location():
 
 ## HTTP POST - Create Record
 
+# generating a user with an api key
+@app.route("/api/v1/cafes/users", methods=["POST"])
+def add_api_user():
+    if request.is_json:
+        username = request.get_json()
+    else:
+        username = request.form
+
+    if not username:
+        return jsonify({'error': 'Username is required'}), 400
+    
+    new_user = APIUsers(username=username["username"])
+    return jsonify({"username": new_user.username, "api_key": new_user.api_key})
+
 # add a cafe to the database with api call
 @app.route("/api/v1/cafes", methods=["POST"])
 @check_api_key
@@ -101,17 +122,17 @@ def add_cafe():
     
     # set all the required fields of the form
     new_cafe = Cafe(
-        name= cafe_to_add["name"],
-        map_url= cafe_to_add["map_url"],
-        img_url= cafe_to_add["img_url"],
-        location= cafe_to_add["location"],
-        seats= cafe_to_add["seats"],
+        name=cafe_to_add["name"],
+        map_url=cafe_to_add["map_url"],
+        img_url=cafe_to_add["img_url"],
+        location=cafe_to_add["location"],
+        seats=cafe_to_add["seats"],
         # these need to be booleans in the database so we wrap the calls in bool to convert
-        has_toilet= bool(cafe_to_add["has_toilet"]),
-        has_wifi= bool(cafe_to_add["has_wifi"]),
-        has_sockets= bool(cafe_to_add["has_sockets"]),
-        can_take_calls= bool(cafe_to_add["can_take_calls"]),
-        black_coffee_price= cafe_to_add["black_coffee_price"],
+        has_toilet=bool(cafe_to_add["has_toilet"]),
+        has_wifi=bool(cafe_to_add["has_wifi"]),
+        has_sockets=bool(cafe_to_add["has_sockets"]),
+        can_take_calls=bool(cafe_to_add["can_take_calls"]),
+        black_coffee_price=cafe_to_add["black_coffee_price"],
     )
     # add to database with add & commit
     db.session.add(new_cafe)
@@ -177,13 +198,11 @@ def update_cafe(cafe_id):
     # commit the changes
     db.session.commit()
 
-
     # return a success
     return jsonify({"Success": f"{cafe_info.name} was updated."})
 
 ## HTTP DELETE - Delete Record
 @app.route("/api/v1/cafes/<int:cafe_id>", methods=["DELETE"])
-@check_api_key
 def delete_cafe(cafe_id):
     # find the record by the id
     cafe_to_delete = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()

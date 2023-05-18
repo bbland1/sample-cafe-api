@@ -48,8 +48,8 @@ class APIUsers(db.Model):
         return f'<APIUser: ID: {self.id} USER: {self.username}>'
 
     # generating a secret api key for a user
-    def generate_api_key(self, user):
-        self.username = user
+    def __init__(self, username):
+        self.username = username
         self.api_key = secrets.token_hex(16)
+        db.session.add(self)
         db.session.commit()
-        return self.api_key
