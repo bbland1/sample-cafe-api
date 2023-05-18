@@ -6,17 +6,14 @@ from models import APIUsers, db
 API_METHODS = ["POST", "PATCH", "DELETE"]
 
 # pick the routes that need to check because not all get paths may be check free
-API_ROUTES = {
-    "/api/v1/cafes": API_METHODS,
-    "/api/v1/cafes/": API_METHODS,
-    
-}
+API_ROUTES = ["/api/v1/cafes/users", ]
 
 # have function to check api
 def check_api_key(route):
     @wraps(route)
     def wrapper(*args, **kwargs):
         request_method = request.method
+        request_path = request.path
 
         # skip the non-api routes
         if request_method not in API_METHODS:
@@ -35,7 +32,7 @@ def check_api_key(route):
             return jsonify({"Error": "Invalid API Key"}), 401
         
         # check if the route needs api
-        if request_method in API_METHODS:
+        if request_method in API_METHODS and request_path not in API_ROUTES:
             return route(*args, **kwargs)
 
         # deny access if API key is required but not present for current route

@@ -203,6 +203,7 @@ def update_cafe(cafe_id):
 
 ## HTTP DELETE - Delete Record
 @app.route("/api/v1/cafes/<int:cafe_id>", methods=["DELETE"])
+@check_api_key
 def delete_cafe(cafe_id):
     # find the record by the id
     cafe_to_delete = db.session.execute(db.select(Cafe).filter_by(id=cafe_id)).scalar_one()
